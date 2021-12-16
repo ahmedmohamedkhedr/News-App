@@ -35,20 +35,20 @@ class ArticlesFragment: Fragment(){
 
         when (val state = articlesFragmentViewModel.articlesFlowObserver.value) {
             is ResultModel.Idle -> {
-                Log.d("res", "")
+
             }
 
             is ResultModel.Loading -> {
-                Log.d("res", "")
+
             }
 
             is ResultModel.Success -> {
-                Log.d("res", state.data.toString())
+
 
             }
 
             is ResultModel.Error -> {
-                Log.d("res", state.errMessage ?: "")
+
             }
         }
     }
