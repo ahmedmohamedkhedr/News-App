@@ -26,7 +26,7 @@ class ArticleHeaderModel(
         }
         articleImageView.loadImage(article.urlToImage)
 
-        root.setOnClickListener {
+        articleCardView.setOnClickListener {
             onClick(article)
         }
     }

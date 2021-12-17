@@ -9,7 +9,9 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.example.newsapp.databinding.FragmentArticlesBinding
 import com.example.newsapp.presentation.ArticlesFragmentViewModel
 import com.example.domain.result.ResultModel
+import com.example.newsapp.R
 import com.example.newsapp.ui.epoxy.controllers.ArticlesController
+import com.example.newsapp.utils.moveTo
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import com.paginate.Paginate
 import kotlinx.coroutines.*
@@ -20,11 +22,13 @@ import kotlin.coroutines.CoroutineContext
 class ArticlesFragment : Fragment(), CoroutineScope, SwipeRefreshLayout.OnRefreshListener {
     private lateinit var ui: FragmentArticlesBinding
     private val articlesFragmentViewModel by viewModel<ArticlesFragmentViewModel>()
-    override val coroutineContext: CoroutineContext = Dispatchers.Main + Job()
+    private val job = Job()
+    override val coroutineContext: CoroutineContext = Dispatchers.Main + job
 
     private val controller: ArticlesController by lazy {
         ArticlesController {
-
+            val destination = ArticleDetailsFragment.newInstance(it)
+            requireActivity().moveTo(destination, R.id.container)
         }
     }
 
@@ -40,12 +44,18 @@ class ArticlesFragment : Fragment(), CoroutineScope, SwipeRefreshLayout.OnRefres
         super.onViewCreated(view, savedInstanceState)
         setupRecyclerView()
         setupSwipeToRefresh()
-        loadArticlesWithPagination()
         handleViewModelStates()
+        loadArticlesWithPagination()
+    }
+
+
+    override fun onDestroy() {
+        super.onDestroy()
+        job.cancel()
     }
 
     private fun handleViewModelStates() {
-        launch {
+        launch(coroutineContext) {
             articlesFragmentViewModel.articlesFlowObserver.collect { resultModel ->
                 when (resultModel) {
                     is ResultModel.Idle -> {
@@ -81,6 +91,7 @@ class ArticlesFragment : Fragment(), CoroutineScope, SwipeRefreshLayout.OnRefres
         Paginate.with(ui.articlesRecyclerView, articlesFragmentViewModel)
             .setLoadingTriggerThreshold(2).addLoadingListItem(false)
             .build()
+
     }
 
 

@@ -1,5 +1,7 @@
 package com.example.domain.entities
 
+import java.io.Serializable
+
 data class ArticleDataModel(
     val id: String,
     val author: String?,
@@ -9,4 +11,4 @@ data class ArticleDataModel(
     val title: String?,
     val url: String?,
     val urlToImage: String?
-)
+) : Serializable

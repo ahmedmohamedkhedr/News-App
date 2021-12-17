@@ -58,6 +58,5 @@ val dataModule = module {
     }
 
     viewModel { ArticlesFragmentViewModel(get(), get(named(KEY_MAIN_DISPATCHER))) }
-
 }
 
