@@ -113,4 +113,30 @@ class ArticlesFragmentViewModelTest {
         }
     }
 
+    @Test
+    fun `test onLoadArticles() with success result and not empty list then page info has next`() {
+        repository = object : ArticleRepository {
+            override suspend fun getArticles(pageNumber: Int): MutableList<ArticleDataModel> =
+                mutableListOf(
+                    ArticleDataModel(
+                        id = "1",
+                        "author1",
+                        content = "content1",
+                        description = "description1",
+                        publishedAt = "1234",
+                        title = "title1",
+                        "url1",
+                        "urlImage1"
+                    )
+                )
+        }
+        useCase = GetArticlesUseCase(repository)
+        runBlocking {
+            val response = useCase(1)
+            viewModel.onLoadArticles(response)
+            assertTrue(response is ResultModel.Success)
+            assertTrue(viewModel.pageInfo.hasNext)
+        }
+    }
+
 }
