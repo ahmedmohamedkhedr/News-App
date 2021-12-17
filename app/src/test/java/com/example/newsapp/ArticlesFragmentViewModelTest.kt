@@ -26,7 +26,7 @@ class ArticlesFragmentViewModelTest {
     @Before
     fun setup() {
         repository = object : ArticleRepository {
-            override suspend fun getArticles(pageNumber: Int): MutableList<ArticleDataModel>? =
+            override suspend fun getArticles(pageNumber: Int): MutableList<ArticleDataModel> =
                 mutableListOf()
         }
         useCase = GetArticlesUseCase(repository)
@@ -59,7 +59,7 @@ class ArticlesFragmentViewModelTest {
     }
 
     @Test
-    fun `test onLoadArticles with success results expected result flow is Success state`() {
+    fun `test onLoadArticles() with success results expected result flow is Success state`() {
         runBlocking {
             viewModel.onLoadArticles(
                 ResultModel.Success(
@@ -72,7 +72,7 @@ class ArticlesFragmentViewModelTest {
     }
 
     @Test
-    fun `test onLoadArticles with error results expected result flow is Error state`() {
+    fun `test onLoadArticles() with error results expected result flow is Error state`() {
         runBlocking {
             viewModel.onLoadArticles(
                 ResultModel.Error(
@@ -85,6 +85,32 @@ class ArticlesFragmentViewModelTest {
             viewModel.articlesFlowObserver.value !is ResultModel.Success &&
                     viewModel.articlesFlowObserver.value is ResultModel.Error
         )
+    }
+
+    @Test
+    fun `test onLoadArticles() with success result and null data then page info has no next`() {
+        repository = object : ArticleRepository {
+            override suspend fun getArticles(pageNumber: Int): MutableList<ArticleDataModel>? = null
+        }
+
+        useCase = GetArticlesUseCase(repository)
+        runBlocking {
+            val response = useCase(1)
+            viewModel.onLoadArticles(response)
+            assertTrue(response is ResultModel.Success)
+            assertTrue(!viewModel.pageInfo.hasNext)
+        }
+    }
+
+    @Test
+    fun `test onLoadArticles() with success result and empty list then page info has no next`() {
+        useCase = GetArticlesUseCase(repository)
+        runBlocking {
+            val response = useCase(1)
+            viewModel.onLoadArticles(response)
+            assertTrue(response is ResultModel.Success)
+            assertTrue(!viewModel.pageInfo.hasNext)
+        }
     }
 
 }
