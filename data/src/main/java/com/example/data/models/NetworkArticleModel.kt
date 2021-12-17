@@ -23,7 +23,7 @@ data class Article(
 ) : Serializable, Mapper<Article, ArticleDataModel> {
 
     override fun map(from: Article): ArticleDataModel = ArticleDataModel(
-        id = source?.id ?: UUID.randomUUID().toString(),
+        id = UUID.randomUUID().toString(),
         author = author?.toString(),
         content = content,
         description = description,

@@ -7,11 +7,8 @@ import com.example.domain.useCases.GetArticlesUseCase
 import com.example.newsapp.utils.PageInfoModel
 import com.example.domain.result.ResultModel
 import com.paginate.Paginate
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 
 class ArticlesFragmentViewModel(
     private val useCase: GetArticlesUseCase,
@@ -26,29 +23,47 @@ class ArticlesFragmentViewModel(
         MutableStateFlow<ResultModel<MutableList<ArticleDataModel>?>>(ResultModel.Idle())
 
 
-    fun loadArticles() {
-        onLoadMore()
-    }
-
     override fun onCleared() {
         super.onCleared()
         resetPagination()
         job.cancel()
     }
 
+    private suspend fun getArticles(): ResultModel<MutableList<ArticleDataModel>?> =
+        withContext(Dispatchers.IO) { useCase(pageInfo.pageNumber) }
+
+    private suspend fun emitLoadingState() {
+        if (pageInfo.pageNumber == 1) {
+            articlesFlowObserver.emit(ResultModel.Loading())
+        }
+    }
+
+    fun resetPagination() {
+        pageInfo = PageInfoModel.empty()
+        isLoadingCheck = false
+    }
+
+    private suspend fun onLoadArticles(result: ResultModel<MutableList<ArticleDataModel>?>) {
+        articlesFlowObserver.emit(result)
+        isLoadingCheck = false
+        if (result is ResultModel.Success) {
+            pageInfo.pageNumber = pageInfo.pageNumber.plus(1)
+            pageInfo.hasNext = result.data.isNullOrEmpty().not()
+        } else {
+            pageInfo.hasNext = false
+        }
+    }
+
+    /**
+     * these functions belongs to Paginate library that I use
+     * this library make pagination much easier
+ **/
     override fun onLoadMore() {
         isLoadingCheck = true
         viewModelScope.launch(dispatcher + job) {
-            if (pageInfo.pageNumber == 1) {
-                articlesFlowObserver.emit(ResultModel.Loading())
-            }
-            val result = useCase(pageInfo.pageNumber)
-            articlesFlowObserver.emit(result)
-            isLoadingCheck = false
-            if (result is ResultModel.Success) {
-                pageInfo.pageNumber = pageInfo.pageNumber.plus(1)
-                pageInfo.hasNext = result.data.isNullOrEmpty().not()
-            }
+            emitLoadingState()
+            val result = getArticles()
+            onLoadArticles(result)
         }
     }
 
@@ -56,8 +71,4 @@ class ArticlesFragmentViewModel(
 
     override fun hasLoadedAllItems(): Boolean = !pageInfo.hasNext
 
-    fun resetPagination() {
-        pageInfo = PageInfoModel.empty()
-        isLoadingCheck = false
-    }
 }
