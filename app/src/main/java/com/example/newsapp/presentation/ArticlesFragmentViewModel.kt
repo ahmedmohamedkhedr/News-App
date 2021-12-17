@@ -15,9 +15,9 @@ class ArticlesFragmentViewModel(
     private val dispatcher: CoroutineDispatcher
 ) : ViewModel(),
     Paginate.Callbacks {
-    private var pageInfo: PageInfoModel = PageInfoModel.empty()
-    private var isLoadingCheck: Boolean = false
-    private val job = Job()
+    var pageInfo: PageInfoModel = PageInfoModel.empty()
+    var isLoadingCheck: Boolean = false
+    val job = Job()
 
     val articlesFlowObserver =
         MutableStateFlow<ResultModel<MutableList<ArticleDataModel>?>>(ResultModel.Idle())
@@ -25,6 +25,10 @@ class ArticlesFragmentViewModel(
 
     override fun onCleared() {
         super.onCleared()
+        clear()
+    }
+
+    fun clear() {
         resetPagination()
         job.cancel()
     }
@@ -32,7 +36,7 @@ class ArticlesFragmentViewModel(
     private suspend fun getArticles(): ResultModel<MutableList<ArticleDataModel>?> =
         withContext(Dispatchers.IO) { useCase(pageInfo.pageNumber) }
 
-    private suspend fun emitLoadingState() {
+    suspend fun emitLoadingState() {
         if (pageInfo.pageNumber == 1) {
             articlesFlowObserver.emit(ResultModel.Loading())
         }
@@ -43,7 +47,7 @@ class ArticlesFragmentViewModel(
         isLoadingCheck = false
     }
 
-    private suspend fun onLoadArticles(result: ResultModel<MutableList<ArticleDataModel>?>) {
+    suspend fun onLoadArticles(result: ResultModel<MutableList<ArticleDataModel>?>) {
         articlesFlowObserver.emit(result)
         isLoadingCheck = false
         if (result is ResultModel.Success) {
@@ -57,7 +61,7 @@ class ArticlesFragmentViewModel(
     /**
      * these functions belongs to Paginate library that I use
      * this library make pagination much easier
- **/
+     **/
     override fun onLoadMore() {
         isLoadingCheck = true
         viewModelScope.launch(dispatcher + job) {
